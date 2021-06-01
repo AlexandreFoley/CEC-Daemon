@@ -14,7 +14,7 @@ ATTENTION: all the dependencies must be install in a way that make them availabl
 -  libcec: A manual install might be necessary to have the python frontend. The AUR-git does the trick on arch and its derivatives.
 -  daemonocle: A python library that takes care of the forking, signal handling, cleanup and all other subtleties of creating a unix daemon.
 -  click: A python library for the command line interface of the daemon.
--  filelock: A syncronization device for interprocess communication.
+-  filelock: A python library that supplies a syncronization device for interprocess communication.
 
 ## installation
 (This instructions aren't nearly detailed enough as of now)

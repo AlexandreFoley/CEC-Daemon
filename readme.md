@@ -27,4 +27,12 @@ ATTENTION: all the dependencies must be install in a way that make them availabl
 -  activate the service.
 
 # TODO
-- improve the situation regarding files and working directory. currently "hardcoded" just after the import statements of cecdaemon
+- Make all the function that expect strings in pyCECclient robust to bad input. Must protect libCEC from it for better stability.
+- improve the situation regarding files and working directory. currently "hardcoded" just after the import statements of cecdaemon.py
+- Make the installation robust and easy. That is probably the hardest thing to do for that project and I might never do it.
+
+## License
+copyright 2021 Alexandre Foley (alexandre.foley@usherbrooke.ca)
+
+The source files of this project are licensed under the GNU General Public License 
+See LICENSE file in the project root for full license information.

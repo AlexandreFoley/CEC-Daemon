@@ -1,5 +1,12 @@
 #! /usr/bin/env python3
 
+# This file is part of the cecdaemon project
+#
+# copyright 2021 Alexandre Foley (alexandre.foley@usherbrooke.ca)
+#
+# Licensed under the GNU General Public License 
+# See LICENSE file in the project root for full license information.
+
 from typing import TextIO
 import daemonocle as dae
 import click

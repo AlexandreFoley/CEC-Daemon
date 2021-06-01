@@ -1,0 +1,14 @@
+[Unit]
+Description=Daemonized client for libCEC
+
+[Service]
+User=cecdaemon
+PIDFile=/home/salon/Documents/CEC-Daemon/cecdaemon.pid
+WorkingDirectory=/home/salon/Documents/CEC-Daemon
+ExecStart=/home/salon/Documents/CEC-Daemon/cecdaemon.py start
+ExecStop=/home/salon/Documents/CEC-Daemon/cecdaemon.py stop
+ExecReload=/home/salon/Documents/CEC-Daemon/cecdaemon.py reload
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

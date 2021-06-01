@@ -1,3 +1,10 @@
+# CECclient
+
+Calling SetCommandCallback more than once can cause a segfault.
+pyCECclient needs to do something to protect against that.
+
+This is most likely true of other callback as well.
+
 ## volume changes
 
 when pressing the volume up button on the TV remote cec-client observes
@@ -64,3 +71,22 @@ The Deamonocle python library offer us a way to create such a deamon that can al
 The other task of the daemon will be accomplished by calling the daemon with options and perhaps arguments to launch other tasks.
 
 A service must then be created to run the daemon on computer launch.
+
+## callbacks - what make them tick?
+
+
+To switchback after the arc button has been pressed on its remote,
+we have to monitor the general traffic (LOG callback) for
+50:c0
+05:00:c0:00
+
+To prevent a bad switch when libcec request active source, call
+p 5 1
+This assign the correct physical adress to the libcec device.
+To switchback to the correct physical path after the switch, or another device, ask to be the active source
+we have to monitor commands for
+xf:82:ab:cd
+where x is any hexadecimal value and abcd is a bad path. also in hex.
+the command is receive as a string.
+So far, device behind the hdmiswitch have the physical adress 8000.
+Perhaps only watching for that one would be enough.

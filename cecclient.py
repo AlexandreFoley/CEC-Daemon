@@ -112,8 +112,8 @@ class pyCecClient:
 	def SetAlertCallback(self,callback):
 		self.cecconfig.SetAlertCallback(callback)
 
-	# detect an adapter and return the com port path
 	def DetectAdapter(self):
+		""" detect an adapter and return the com port path """
 		retval = None
 		adapters = self.lib.DetectAdapters()
 		for adapter in adapters:
@@ -126,7 +126,7 @@ class pyCecClient:
 
 	# initialise libCEC
 	def InitLibCec(self):
-		self.lib = cec.ICECAdapter.Create(self.cecconfig)
+		self.lib:cec.ICECAdapter = cec.ICECAdapter.Create(self.cecconfig)
 		# print libCEC version and compilation information
 		print(
 			"libCEC version "
@@ -167,10 +167,55 @@ class pyCecClient:
 	# send an active source message
 	@register_mainloop_command("be_as")
 	def CommandActiveSource(self):
-		"""send an active source message"""
+		"""make this CEC device the active source"""
 		return self.lib.SetActiveSource()
 
+	@register_mainloop_command("be_is")
+	def CommandInactiveSource(self):
+		"""Broadcast that this CEC device is no longer the source"""
+		return self.lib.SetInactiveView()
+
+	def GetActiveSource(self):
+		"""return the logical address of the currently active source"""
+		return self.lib.GetActiveSource()
+
+	@register_mainloop_command("sleep_tv")
+	def sleep_TV(self):
+		"""
+		Turn off the TV if this is the active source
+		"""
+		cur_as = self.GetActiveSource()
+		if cur_as <=15 and cur_as >=0:
+			if self.lib.GetLogicalAddresses()[cur_as]:
+				self.StandbyDevice(0)
+				self.CommandInactiveSource()
+
+	def ToggleDevicePower(self,logical_address:int):
+		"""toggle the power status of a device"""
+		is_on = self.lib.GetDevicePowerStatus(logical_address)
+		if is_on == cec.CEC_POWER_STATUS_STANDBY or is_on == cec.CEC_POWER_STATUS_UNKNOWN:
+			out = self.PowerOnDevices(logical_address)
+			self.CommandActiveSource()
+			return out
+		if is_on == cec.CEC_POWER_STATUS_ON:
+			self.CommandInactiveSource()
+			return self.StandbyDevice(logical_address)
+		return False
+
+	@register_mainloop_command("toggle_power")
+	def ProcessToggleDevicePower(self,logical_address:str):
+		"Toggle the power status of the device with the logical address"
+		return self.ToggleDevicePower(str_to_logical_address(logical_address))
+
+	@register_mainloop_command("get_as")
+	def ProcessGetActiveSource(self):
+		"""Obtain the logical address of the active source"""
+		print(self.GetActiveSource(),file=self.stdout)
+
 	def StandbyDevice(self,logical_address:int):
+		"""
+		put the device in standby
+		"""
 		return self.lib.StandbyDevices(logical_address)
 	# send a standby command
 	@register_mainloop_command("standby")
@@ -180,6 +225,7 @@ class pyCecClient:
 			print("invalid destination",file=self.stdout)
 
 	def SetLogicalAddress(self,logical_address:int):
+		"""set logical adress of the CEC device"""
 		return self.lib.SetLogicalAddress(logical_address)
 
 	@register_mainloop_command("set_la")

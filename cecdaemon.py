@@ -24,6 +24,7 @@ daemonInput = this_dir + "daemoninput.fifo"
 daemonOutput = this_dir + "daemonoutput.fifo"
 daemonLock = daemonInput+".lock"
 DONE = "éà\n"
+ATTACHDONE="àéà\n"
 
 """
 This must run with elevated permission to acquire the CEC ressource.
@@ -59,19 +60,24 @@ def generate_method_string(string_name:str,function_handle):
 	return exec_string
 
 
-def read_and_print_pipe(pipe_path:str,out:TextIO):
+def read_and_print_pipe(pipe_path:str,out:TextIO, stop = DONE, filter = DONE):
 	"""open a pipe to read and print it all to stdout
 	until the done sequence of character is received.
 	Launch this function inside a thread to avoid locking on this function's I/O"""
+	LS = len(stop)
+	LF = len(filter)
 	pipe = open(pipe_path,"r")
 	for line in pipe:
 		if line == '':#closed on the other side.
 			out.write("The pipe was closed, the cec daemon was closed by another process, or crashed.\n")
 			break
-		if line[-3:] == DONE:
-			out.write(line[:-3]+'\n')
+		if line[-LS:] == stop:
+			out.write(line[:-LS]+'\n')
 			break
-		out.write(line)
+		if line[-LF:] == filter:
+			out.write(line[:-LF]+'\n')
+		else:
+			out.write(line)
 
 
 
@@ -141,9 +147,11 @@ class cecdaemon(dae.Daemon):
 		all output from the cecclient (like log info from callbacks) is printed for the duration
 		'''
 		output_pipe = open(daemonOutput,"r")
-		handle = threading.Thread(target = read_and_print_pipe,args = (output_pipe,sys.stdout))
+		handle = threading.Thread(target = read_and_print_pipe,args = (output_pipe,sys.stdout,ATTACHDONE))
 		handle.start()
 		self._forward_args("attach")
+		input()
+		self._forward_args("detach")
 		handle.join()
 
 	#for each of the interactive commands of pyCeCclient, generate a command line command for the daemon
@@ -178,11 +186,11 @@ class cecdaemon(dae.Daemon):
 				if command[0] == "attach":
 					output.write("press enter to detach.")
 					time.sleep(1)
-					# in_guard,self.cec.stdin = self.cec.stdin,self.input
-					out_guard, self.cec.stdout = self.cec.stdout, output
-					self.input.readline()
-					# self.cec.loop()#i am not sure the input is gonna work as it currently is.
-					self.cec.stdout =out_guard
+					self.attach_guard, self.cec.stdout = self.cec.stdout, output
+				elif command[0] == "detach":
+					self.cec.stdout =self.attach_guard
+					output.write(ATTACHDONE)
+					output.flush()
 				elif command[0] in self.cec.interactive_cmd:
 					out_guard = self.cec.stdout
 					self.cec.stdout = output # switch the output sink just for this command execution time

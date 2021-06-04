@@ -116,6 +116,8 @@ class cecdaemon(dae.Daemon):
 		#if it's not baked in the CECclient, it's baked in the daemon.
 		self.cec.InitLibCec()
 		self.cec.SetHDMIPort(5,1)
+		if self.cec.GetActiveSource ==-1:
+			self.cec.CommandActiveSource()
 		print("opening daemonInput")
 		self.input = open(daemonInput,"r")
 		print("opening daemonoutput")

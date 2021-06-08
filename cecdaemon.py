@@ -108,7 +108,7 @@ class cecdaemon(dae.Daemon):
 		os.chmod(daemonInput,0o666)
 		os.mkfifo(daemonOutput,mode=0o644)#read only for everyone but the owner.
 		lock = filelock.FileLock(daemonInput+'.lock', timeout=1)
-		self.cec = cecclient.pyCecClient()
+		self.cec = cecclient.pyCecClient(deviceType=cecclient.CEC_DEVICE_TYPE_PLAYBACK_DEVICE)
 		self.cec.SetLogCallback(self.cec.LogCallback)
 		self.cec.SetKeyPressCallback(self.cec.KeyPressCallback )
 		self.cec.SetCommandCallback(self.cec.switchback_badpa)#switchback badpath probably shouldn't be built in.
@@ -116,7 +116,8 @@ class cecdaemon(dae.Daemon):
 		#if it's not baked in the CECclient, it's baked in the daemon.
 		self.cec.InitLibCec()
 		self.cec.SetHDMIPort(5,1)
-		if self.cec.GetActiveSource ==-1:
+		# time.sleep(0.5)
+		if self.cec.GetActiveSource() ==-1:
 			self.cec.CommandActiveSource()
 		print("opening daemonInput")
 		self.input = open(daemonInput,"r")

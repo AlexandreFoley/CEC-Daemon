@@ -39,7 +39,7 @@ This default must be overwritten.
 def generate_method_string(string_name:str,function_handle):
 	"generate an exposed method that trigger an action from the cecdaemon, in a string to be read by exec"
 	ArgSpec = inspect.getfullargspec(function_handle)
-	if ArgSpec.varkw != None: #skip those for now... there ain't any, anyway
+	if ArgSpec.varkw != None or string_name=='h' or string_name=='help': #skip those for now... there ain't any, anyway
 		return ''
 	exec_string = "@dae.expose_action\n"
 	args = ArgSpec.args[1:]
@@ -69,7 +69,7 @@ def read_and_print_pipe(pipe_path:str,out:TextIO, stop = DONE, filter = DONE):
 	pipe = open(pipe_path,"r")
 	for line in pipe:
 		if line == '':#closed on the other side.
-			out.write("The pipe was closed, the cec daemon was closed by another process, or crashed.\n")
+			out.write("The pipe was closed, the cec daemon was closed by another process, or cecdaemon crashed.\n")
 			break
 		if line[-LS:] == stop:
 			out.write(line[:-LS]+'\n')
@@ -104,7 +104,7 @@ class cecdaemon(dae.Daemon):
 		# 	   sys.exit("Elevated permission are necessary to acquire the cec device")
 		try_remove(daemonOutput)#make sure it's clean
 		try_remove(daemonInput)#make sure it's clean
-		os.mkfifo(daemonInput,mode=0o666) #for some reason the mode is getting ignored here.
+		os.mkfifo(daemonInput,mode=0o666) #for some reason the mode is getting ignored here. and AFAK, 666 is the default, so why do i have to set it?
 		os.chmod(daemonInput,0o666)
 		os.mkfifo(daemonOutput,mode=0o644)#read only for everyone but the owner.
 		lock = filelock.FileLock(daemonInput+'.lock', timeout=1)
@@ -143,16 +143,17 @@ class cecdaemon(dae.Daemon):
 		else:
 			self._echo_warning('{name} is not running'.format(name=self.name))
 
-	@dae.expose_action
+	# @dae.expose_action
 	def attach(self):
 		'''
 		attach the console to the cec client output.
 		all output from the cecclient (like log info from callbacks) is printed for the duration
+		Doesn't work as it should currently, temporarily removed from the interface.
 		'''
-		output_pipe = open(daemonOutput,"r")
-		handle = threading.Thread(target = read_and_print_pipe,args = (output_pipe,sys.stdout,ATTACHDONE))
-		handle.start()
+		# output_pipe = open(daemonOutput,"r")
+		handle = threading.Thread(target = read_and_print_pipe,args = (daemonOutput,sys.stdout,ATTACHDONE))
 		self._forward_args("attach")
+		handle.start()
 		input()
 		self._forward_args("detach")
 		handle.join()
@@ -190,6 +191,7 @@ class cecdaemon(dae.Daemon):
 					output.write("press enter to detach.")
 					time.sleep(1)
 					self.attach_guard, self.cec.stdout = self.cec.stdout, output
+					output.write(DONE)
 				elif command[0] == "detach":
 					self.cec.stdout =self.attach_guard
 					output.write(ATTACHDONE)

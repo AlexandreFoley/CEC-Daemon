@@ -21,7 +21,8 @@ import filelock
 import cecclient
 
 try:
-	this_dir = open('this_dir','r').readline() +'/'
+	this_dir = open('this_dir','r').readline()
+	this_dir = this_dir.strip()+'/'
 except FileNotFoundError: #dev mode default.
 	this_dir = "/home/salon/Documents/CEC-Daemon/"
 daemonInput = this_dir + "daemoninput.fifo"

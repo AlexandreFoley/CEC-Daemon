@@ -22,7 +22,7 @@ ATTENTION: all the dependencies must be install in a way that make them availabl
 -  create any call back you might need and modify the daemon's worker to register them. (for now only one callback function per type of callback possible...)
 -  put a symlink to the bash script "cecdaemon" in the PATH.
 -  In the daemon working directory, create a python virtual environment named env with access to global packages ($ python -m venv env --system-site-packages)
--  In the virtual environment, install locally the dependency of the project other than libcec ($ source env/bin/active && pip install -I filelock daemonocle click && deactivate)
+-  In the virtual environment, install locally the dependency of the project other than libcec ($ source ./env/bin/activate && pip install -I filelock daemonocle click && deactivate)
 -  make adjustements to the service file (folders , paths, user and such)
 -  make sure the cecdaemon user has access to the daemon's working directory.
 -  copy the service file to systemd.

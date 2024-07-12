@@ -11,7 +11,7 @@ And even if you don't need any callbacks doing background work, libcec has a lot
 ## dependencies	
 ATTENTION: all the dependencies must be install in a way that make them available to the user that will own the daemon process.
 
--  libcec: A manual install might be necessary to have the python frontend. The AUR-git does the trick on arch and its derivatives.
+-  libcec: A manual install might be necessary to have the python frontend. The AUR-git and Extra's packages does the trick on arch and its derivatives.
 -  daemonocle: A python library that takes care of the forking, signal handling, cleanup and all other subtleties of creating a unix daemon.
 -  click: A python library for the command line interface of the daemon.
 -  filelock: A python library that supplies a syncronization device for interprocess communication.
@@ -20,7 +20,9 @@ ATTENTION: all the dependencies must be install in a way that make them availabl
 (This instructions aren't nearly detailed enough as of now)
 -  create a user for the daemon, make it member of the group that has access to the cecdevice (uucp with Archlinux and a USB connected device.) ($ useradd -M -s /usr/bin/nologin -G uucp cecdaemon)
 -  create any call back you might need and modify the daemon's worker to register them. (for now only one callback function per type of callback possible...)
--  put the cecdaemon in the PATH.
+-  put a symlink to the bash script "cecdaemon" in the PATH.
+-  In the daemon working directory, create a python virtual environment named env with access to global packages ($ python -m venv env --system-site-packages)
+-  In the virtual environment, install locally the dependency of the project other than libcec ($ source env/bin/active && pip install -I filelock daemonocle click && deactivate)
 -  make adjustements to the service file (folders , paths, user and such)
 -  make sure the cecdaemon user has access to the daemon's working directory.
 -  copy the service file to systemd.

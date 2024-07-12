@@ -1,0 +1,25 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Test Daemon start",
+			"type": "python",
+			"request": "launch",
+			"program": "${workspaceFolder}/cecdaemon.py",
+			"args": ["start"],
+			"console": "integratedTerminal",
+			"sudo": true
+		},
+		{
+			"name": "Test Daemon volup",
+			"type": "python",
+			"request": "launch",
+			"args": ["volup"],
+			"program": "${workspaceFolder}/cecdaemon.py",
+			"console": "integratedTerminal"
+		}
+	]
+}

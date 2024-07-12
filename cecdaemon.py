@@ -7,19 +7,23 @@
 # Licensed under the GNU General Public License 
 # See LICENSE file in the project root for full license information.
 
-from typing import TextIO
-import daemonocle as dae
-import click
-import cecclient
-import time
+import inspect
 import os
 import sys
 import threading
+import time
+from typing import TextIO
+
+import click
+import daemonocle as dae
 import filelock
-import inspect
 
+import cecclient
 
-this_dir = "/home/salon/Documents/CEC-Daemon/"
+try:
+	this_dir = open('this_dir','r').readline() +'/'
+except FileNotFoundError: #dev mode default.
+	this_dir = "/home/salon/Documents/CEC-Daemon/"
 daemonInput = this_dir + "daemoninput.fifo"
 daemonOutput = this_dir + "daemonoutput.fifo"
 daemonLock = daemonInput+".lock"
@@ -162,7 +166,6 @@ class cecdaemon(dae.Daemon):
 	for string_name in cecclient.pyCecClient.interactive_cmd:
 		exec_string = generate_method_string(string_name,cecclient.pyCecClient.interactive_cmd[string_name])
 		exec(exec_string)
-
 	def _repl(self,input:TextIO,output:TextIO):
 		"""the read eval print loop of the daemon.
 		 Waits for user input received by calling the exposed function of the daemon"""

@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+
 
 # This file is part of the cecdaemon project
 #
@@ -13,10 +13,11 @@
 # Licensed under the GNU General Public License 
 # See LICENSE file in the project root for full license information.
 
-import cec
+import functools
 import inspect
 import sys
-import functools
+
+import cec
 
 # print(cec)
 
@@ -201,6 +202,26 @@ class pyCecClient:
 			self.CommandInactiveSource()
 			return self.StandbyDevice(logical_address)
 		return False
+	
+	def toggle_audioNTV(self):
+		"""Toggle the power to the TV and audio device, based
+		 on the power status pof the audio device. Because my TV no longer emit CEC messages."""
+		TV_laddr = 0
+		Audio_laddr = 5
+		is_on = self.lib.GetDevicePowerStatus(Audio_laddr)
+		if is_on == cec.CEC_POWER_STATUS_STANDBY or is_on == cec.CEC_POWER_STATUS_UNKNOWN:
+			out = self.PowerOnDevices(TV_laddr) and self.PowerOnDevices(Audio_laddr)
+			self.CommandActiveSource()
+			return out
+		if is_on == cec.CEC_POWER_STATUS_ON:
+			self.CommandInactiveSource()
+			return self.StandbyDevice(TV_laddr) and self.StandbyDevice(Audio_laddr)
+		return False
+	
+	@register_mainloop_command("toggle_system")
+	def ProcessToggleAudioNTV(self):
+		"""Toggle TV and audio device based on audio device status."""
+		return self.toggle_audioNTV()
 
 	@register_mainloop_command("toggle_power")
 	def ProcessToggleDevicePower(self,logical_address:str):

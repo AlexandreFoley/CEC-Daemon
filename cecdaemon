@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
 script_dir=$(dirname $(readlink -f $0))
-echo $script_dir > this_dir 
+echo $script_dir > $script_dir/this_dir 
 source "$script_dir/env/bin/activate"
 python -u cecdaemon.py  "${@:1}"

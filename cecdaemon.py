@@ -273,7 +273,7 @@ class cecdaemon(dae.Daemon):
 
 if __name__ == '__main__':
 	daemon = cecdaemon(
-		pid_file=this_dir+'/cecdaemon.pid',
-		# detach = False,
+		pid_file=this_dir+'cecdaemon.pid',
+		# detach = False, #default is True
 	)
 	daemon.cli()

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -e
 script_dir=$(dirname $(readlink -f $0))
-echo $script_dir > $script_dir/this_dir 
+if ! test -f /path/to/file; then
+  echo $script_dir > $script_dir/this_dir 
+fi
+cd $script_dir
 source "$script_dir/env/bin/activate"
 python -u cecdaemon.py  "${@:1}"
-rm $script_dir/this_dir 

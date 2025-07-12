@@ -1,0 +1,12 @@
+{
+  "service_dir": "/etc/systemd/system",
+  "work_dir": "/var/lib/cecdaemon", 
+  "config_dir": "/etc/cecdaemon",
+  "executable_dir": "/usr/bin",
+  "user": "cecdaemon",
+  "group": "cecdaemon",
+  "user_created": true,
+  "group_created": true,
+  "service_name": "cecdaemon",
+  "executable_name": "cecdaemon"
+}

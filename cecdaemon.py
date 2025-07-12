@@ -20,13 +20,10 @@ import filelock
 
 import cecclient
 
-try:
-	this_dir = open('this_dir','r').readline()
-	this_dir = this_dir.strip()+'/'
-except FileNotFoundError: #dev mode default.
-	this_dir = "/home/salon/Documents/CEC-Daemon/"
-daemonInput = this_dir + "daemoninput.fifo"
-daemonOutput = this_dir + "daemonoutput.fifo"
+work_dir = "./DEV-CEC-Daemon/"
+
+daemonInput = work_dir + "daemoninput.fifo"
+daemonOutput = work_dir + "daemonoutput.fifo"
 daemonLock = daemonInput+".lock"
 DONE = "éà\n"
 ATTACHDONE="àéà\n"
@@ -241,7 +238,7 @@ class cecdaemon(dae.Daemon):
         detach=True,
         # Paths
         pid_file=None,
-        work_dir='/',
+        work_dir=work_dir,
         stdout_file=None,
         stderr_file=None,
         chroot_dir=None,
@@ -263,18 +260,19 @@ class cecdaemon(dae.Daemon):
 		if worker:
 			def imeta_worker():
 				handle = threading.Thread(target = worker,args = (),daemon=True)
-				assert(handle.isDaemon())
+				assert(handle.daemon)
 				handle.start()
 				self._deamon_main()
 			meta_worker = imeta_worker
 		else:
 			meta_worker = self._deamon_main
-		super().__init__(name=name, worker=meta_worker, detach=detach, pid_file=pid_file, work_dir=work_dir, stdout_file=stdout_file, stderr_file=stderr_file, chroot_dir=chroot_dir, uid=uid, gid=gid, umask=umask, close_open_files=close_open_files, hooks=hooks, stop_timeout=stop_timeout, prog=prog, pidfile=pidfile, workdir=workdir, chrootdir=chrootdir, shutdown_callback=shutdown_callback)
+		super().__init__(name=name, worker=meta_worker, detach=detach, pid_file=pid_file, work_dir=work_dir, stdout_file=stdout_file, stderr_file=stderr_file, chroot_dir=chroot_dir, uid=uid, gid=gid, umask=umask, close_open_files=close_open_files, hooks=hooks, stop_timeout=stop_timeout)#, prog=prog, pidfile=pidfile, workdir=workdir, chrootdir=chrootdir, shutdown_callback=shutdown_callback)
 
 
 if __name__ == '__main__':
 	daemon = cecdaemon(
-		pid_file=this_dir+'cecdaemon.pid',
+		pid_file=work_dir+'cecdaemon.pid',
+		work_dir=work_dir,
 		# detach = False, #default is True
 	)
 	daemon.cli()

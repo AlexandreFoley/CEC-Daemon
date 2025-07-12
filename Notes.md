@@ -62,7 +62,7 @@ But it does offer to run a script after some time spent idling.
 Using the python module pynput, I could create a script that upon launch, shutdown the screen and then monitor the keyboard and mouse for any actions. As soon as any action is detected, it turns the screen back on, and shut itself down.
 
 ## hdmi signal path monitoring
-For the signal to get from the computer to the screen, a particular path is needed: the soundbar stand in between the tv and everything else. ARC is not available on the TV. For some reason the soundbar tends to switch to ARC mode when the TV turn on or a device request a signal path change. For the soundbar, ARC is never right. Passthrough is the only mode in which something shows on the TV screen.
+For the signal to get from the computer to the screen, a particular path is needed: the soundbar stand in between the tv and everything else. ARC is not available on the TV. For some reason the soundbar tends to switch to ARC mode when the TV turn on or a device request a signal path change. For the soundbar, with this TV, ARC is never right. Passthrough is the only mode in which something shows on the TV screen.
 
 For that reason, we need a deamon to run that monitor the status of the soundbar on the CECline, and whenever the soundbar switches to ARC, put it in passthough, as we can assume something wants to display on screen when ARC mode is tripped.
 
@@ -90,3 +90,36 @@ where x is any hexadecimal value and abcd is a bad path. also in hex.
 the command is receive as a string.
 So far, device behind the hdmiswitch have the physical adress 8000.
 Perhaps only watching for that one would be enough.
+
+## Service Installation Validation TODO
+
+Based on analysis of robust service installation requirements, we have identified several validation areas to implement:
+
+### Priority Items (In Progress)
+1. **Systemd Service Validation**
+   - 1.1 Service name conflicts: Check if a service with the same name already exists ✓
+   - 1.2 Service file syntax validation: Cannot be done during build phase
+        - `systemd-analyze verify` requires .service file extension for services
+        - `systemd-analyze verify` validates that ExecStart paths exist and are executable
+        - Must be done after executable installation, before service registration
+        - This validation step is deferred until full installation process is implemented
+   
+2. **Runtime Dependencies** 
+   - 2.1 Python executable validation: Verify the Python interpreter exists and is executable
+    - That's silly. Of course there's an available python interpreter.
+   - 2.2 Required Python modules: Check if critical modules (like `cec`) can be imported
+
+3. **Service Lifecycle Validation**
+   - 8.3 Rollback capability: Ensure we can undo changes if installation fails
+
+### Lower Priority / Not Needed
+- Network and port validation (not applicable for CEC daemon)
+- SELinux/AppArmor compatibility (too complex for initial implementation)
+- Memory/disk space requirements (basic service, not critical)
+- Hardware CEC device detection (runtime concern, not installation)
+
+### Current Status
+- Most basic validations are already implemented
+- Focus is on service-specific validations and runtime dependency checks
+- Configuration validation follows inspection-only pattern (no system modification during validation)
+- Need to research tools for systemd service file syntax validation

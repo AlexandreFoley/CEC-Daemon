@@ -61,14 +61,6 @@ def Interactive_Mode( cls ):
 			cls.help_string = cls.help_string + '{:<15} {:>0}'.format(cmdstr, func.__doc__ )+ '\n'
 	return cls
 
-def str_to_logical_address(log_addr:str):
-	try:
-		out = int(log_addr)
-		if not (out >= cec.CECDEVICE_TV and out <=cec.CECDEVICE_BROADCAST):
-			out = cec.CECDEVICE_UNKNOWN
-		return out
-	except:
-		print("logical adress must be a number in the range [{},{}]".format(cec.CECDEVICE_TV,cec.CECDEVICE_BROADCAST),file=self.stdout)
 
 @Interactive_Mode
 class pyCecClient:
@@ -145,6 +137,15 @@ class pyCecClient:
 				print("connection opened",file=self.stdout)
 			else:
 				print("failed to open a connection to the CEC adapter",file=self.stdout)
+
+	def str_to_logical_address(self,log_addr:str):
+		try:
+			out = int(log_addr)
+			if not (out >= cec.CECDEVICE_TV and out <=cec.CECDEVICE_BROADCAST):
+				out = cec.CECDEVICE_UNKNOWN
+			return out
+		except:
+			print("logical adress must be a number in the range [{},{}]".format(cec.CECDEVICE_TV,cec.CECDEVICE_BROADCAST),file=self.stdout)
 
 	# display the addresses controlled by libCEC
 	@register_mainloop_command('address')
@@ -226,7 +227,7 @@ class pyCecClient:
 	@register_mainloop_command("toggle_power")
 	def ProcessToggleDevicePower(self,logical_address:str):
 		"Toggle the power status of the device with the logical address"
-		return self.ToggleDevicePower(str_to_logical_address(logical_address))
+		return self.ToggleDevicePower(self.str_to_logical_address(logical_address))
 
 	@register_mainloop_command("get_as")
 	def ProcessGetActiveSource(self):
@@ -242,7 +243,7 @@ class pyCecClient:
 	@register_mainloop_command("standby")
 	def ProcessCommandStandby(self,logical_address:str):
 		"""Send a standby command"""
-		if not self.StandbyDevice(str_to_logical_address(logical_address)):
+		if not self.StandbyDevice(self.str_to_logical_address(logical_address)):
 			print("invalid destination",file=self.stdout)
 
 	def SetLogicalAddress(self,logical_address:int):
@@ -252,7 +253,7 @@ class pyCecClient:
 	@register_mainloop_command("set_la")
 	def ProcessSetLogicalAddress(self,logical_address:str):
 		"""set logical adress of the CEC device"""
-		if not self.SetLogicalAddress(str_to_logical_address(logical_address)):
+		if not self.SetLogicalAddress(self.str_to_logical_address(logical_address)):
 			print("command failed",file=self.stdout)
 
 	def SetHDMIPort(self, base_device_logical_address:int, Port:int):
@@ -261,7 +262,7 @@ class pyCecClient:
 	@register_mainloop_command("port")
 	def ProcessSetHDMIPort(self, base_device_logical_address:str, Port:str):
 		"change the HDMI port number of the CEC adapter."
-		base_dev = str_to_logical_address(base_device_logical_address)
+		base_dev = self.str_to_logical_address(base_device_logical_address)
 		if not self.lib.SetHDMIPort(base_dev,int(Port)):
 			print("command failed",file=self.stdout)
 
@@ -341,7 +342,7 @@ class pyCecClient:
 	@register_mainloop_command("on")
 	def PowerOnDevices(self, logical_address):
 		"""power on the device with the given logical address"""
-		logical_address = str_to_logical_address(logical_address)
+		logical_address = self.str_to_logical_address(logical_address)
 		self.lib.PowerOnDevices(logical_address)
 
 	
@@ -437,11 +438,13 @@ def default_cecclient():
 	lib.SetKeyPressCallback(lib.KeyPressCallback )
 	lib.SetCommandCallback(lib.CommandCallback)
 	return lib
-	
-def callback_print(*args):
-	print("callback printer: ",file=self.stdout)
+
+#TODO: fix this.
+#Can't possibly work as it is.
+def callback_print(lib,*args):
+	print("callback printer: ",file=lib.stdout)
 	for a in args:
-		print(a,' ',file=self.stdout)
+		print(a,' ',file=lib.stdout)
 
 if __name__ == "__main__":
 	# initialise libCEC

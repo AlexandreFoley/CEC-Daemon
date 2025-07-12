@@ -1,7 +1,7 @@
 # CECdaemon
 An attempt at daemonizing the cecclient.
 
-Using libCEC python frontend, this library implements a cecclient in python, and using daemonocle and click, it daemonize said client.
+Using libCEC python frontend, this project implements a cecclient in python, and using daemonocle and click, it daemonize said client.
 The daemon can receive user input while running. Communication between the running daemon and the command line is done through named pipe, with a file lock for the daemon's input.
 
 Launching and closing the client for every single command isn't an option if you want to have some registered callback monitoring the status and making adjustement to the the HDMI connection at all time, because only a single instance of libCEC can connect to the physical CEC device at any time.
@@ -28,6 +28,11 @@ ATTENTION: all the dependencies must be install in a way that make them availabl
 -  copy the service file to systemd.
 -  activate the service.
 
+# Packaging in a more robust way
+- compiling with nuitka seemed to have worked on the first try.
+    - `python -m nuitka --standalone cecdaemon.py`
+    - More testing is needed ofc. so far so good.
+    - I suspect libcec has been pulled in to the "package". That's undesirable for proper distribution (forbidden by many distros), but I don't care enough. If there's ever interest in this project by other I can revisit this.
 # TODO
 - Make all the function that expect strings in pyCECclient robust to bad input. Must protect libCEC from it for better stability.
 - improve the situation regarding files and working directory. currently "hardcoded" just after the import statements of cecdaemon.py

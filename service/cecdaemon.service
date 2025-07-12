@@ -1,14 +1,25 @@
 [Unit]
-Description=Daemonized client for libCEC
+Description=CEC Daemon for HDMI-CEC control
+After=multi-user.target
 
 [Service]
-User=cecdaemon
-PIDFile=/home/salon/Documents/CEC-Daemon/cecdaemon.pid
-WorkingDirectory=/home/salon/Documents/CEC-Daemon
-ExecStart=/home/salon/Documents/CEC-Daemon/cecdaemon.py start
-ExecStop=/home/salon/Documents/CEC-Daemon/cecdaemon.py stop
-ExecReload=/home/salon/Documents/CEC-Daemon/cecdaemon.py reload
+Type=simple
+User={USER}
+Group={GROUP}
+WorkingDirectory={WORK_DIR}
+ExecStart={EXECUTABLE_PATH}
+Environment=CECDAEMON_CONFIG_DIR={CONFIG_DIR}
+ConfigurationDirectory=cecdaemon
 Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={WORK_DIR}
+ReadWritePaths={CONFIG_DIR}
 
 [Install]
 WantedBy=multi-user.target

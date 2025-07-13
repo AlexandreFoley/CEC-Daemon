@@ -128,10 +128,11 @@ def install():
     
     # Check for permission issues before attempting installation
     permission_issues = []
-    if not CONFIG['permissions']['service_dir_accessible']:
-        permission_issues.append(CONFIG['permissions']['service_dir_warning'])
-    if not CONFIG['permissions']['executable_dir_accessible']:
-        permission_issues.append(CONFIG['permissions']['executable_dir_warning'])
+    if os.geteuid() != 0:
+        if not CONFIG['permissions']['service_dir_accessible']:
+            permission_issues.append(CONFIG['permissions']['service_dir_warning'])
+        if not CONFIG['permissions']['executable_dir_accessible']:
+            permission_issues.append(CONFIG['permissions']['executable_dir_warning'])
     
     if permission_issues and not ctx.dry_run:
         # We have permission issues and we're not in dry-run mode
@@ -247,6 +248,33 @@ def install():
     ctx.run(['chmod', '755', executable_dest])
     ctx.print(f"✓ Executable installed: {executable_dest}")
     
+    # 6. Save installation configuration for the uninstaller
+    ctx.print("Saving installation configuration...")
+    uninstaller_config = {
+        'service_dir': service_dir,
+        'work_dir': work_dir,
+        'config_dir': config_dir,
+        'executable_dir': executable_dir,
+        'user': user,
+        'group': group,
+        'user_created': user_not_created,
+        'group_created': group_not_created,
+        'service_name': 'cecdaemon',
+        'executable_name': 'cecdaemon',
+        'uninstaller_path': path_join(config_dir, "uninstaller.py"),
+        'config_file_path': path_join(config_dir, 'install_config.json')
+    }
+    
+    # Save config to the config directory
+    config_file = path_join(config_dir, 'install_config.json')
+    try:
+        ctx.write_file(config_file, json.dumps(uninstaller_config, indent=2))
+        ctx.run(['chown', 'root:root', config_file])
+        ctx.run(['chmod', '444', config_file])
+        ctx.print(f"✓ Installation configuration saved to {config_file}")
+    except Exception as e:
+        ctx.print(f"⚠ Warning: Could not save installation configuration: {e}")
+    
     # 3. Install the uninstaller to config directory
     ctx.print("Copying uninstaller...")
     uninstaller_source = path_join(build_dir, "uninstaller.py")
@@ -277,35 +305,6 @@ def install():
         ctx.print("✗ Failed to install systemd service")
         ctx.system_exit(1)
     
-    # TODO: Validate the service file after executable installation
-    # This should be done here now that the executable is in place
-    
-    # 6. Save installation configuration for the uninstaller
-    ctx.print("Saving installation configuration...")
-    uninstaller_config = {
-        'service_dir': service_dir,
-        'work_dir': work_dir,
-        'config_dir': config_dir,
-        'executable_dir': executable_dir,
-        'user': user,
-        'group': group,
-        'user_created': user_not_created,
-        'group_created': group_not_created,
-        'service_name': 'cecdaemon',
-        'executable_name': 'cecdaemon',
-        'uninstaller_path': path_join(config_dir, "uninstaller.py"),
-        'config_file_path': path_join(config_dir, 'install_config.json')
-    }
-    
-    # Save config to the config directory (not work directory)
-    config_file = path_join(config_dir, 'install_config.json')
-    try:
-        ctx.write_file(config_file, json.dumps(uninstaller_config, indent=2))
-        ctx.run(['chown', 'root:root', config_file])
-        ctx.run(['chmod', '444', config_file])
-        ctx.print(f"✓ Installation configuration saved to {config_file}")
-    except Exception as e:
-        ctx.print(f"⚠ Warning: Could not save installation configuration: {e}")
     
     # 7. Enable and start the service
     ctx.print("Enabling and starting CECDaemon service...")

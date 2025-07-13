@@ -12,7 +12,6 @@ ExecStop={EXECUTABLE_PATH} stop
 ExecReload={EXECUTABLE_PATH} restart
 PIDFile={WORK_DIR}/cecdaemon.pid
 Environment=CECDAEMON_CONFIG_DIR={CONFIG_DIR}
-ConfigurationDirectory={CONFIG_DIR}
 
 
 [Install]

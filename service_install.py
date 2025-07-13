@@ -58,6 +58,16 @@ def configure(service_dir=None, work_dir=None, config_dir=None, executable_dir=N
         user, group, user_usb_groups, 'cecdaemon', build_dir
     )
     
+    # Save configuration to build directory for potential sudo re-execution
+    config_file = path_join(CONFIG['paths']['build_dir'], 'install_config.json')
+    try:
+        ctx.makedirs(CONFIG['paths']['build_dir'], exist_ok=True)
+        ctx.write_file(config_file, json.dumps(CONFIG, indent=2))
+        ctx.print(f"✓ Configuration saved to {config_file}")
+    except Exception as e:
+        ctx.print(f"⚠ Warning: Could not save configuration: {e}")
+        # Don't exit on config save failure, as it's not critical for normal operation
+    
     return CONFIG
 
 def build():
@@ -94,6 +104,27 @@ def build():
         # Compile with the modified source
         compile_with_nuitka(venv_python, build_dir)
         verify_build_output(build_dir)
+        
+        # Create systemd service file from template
+        ctx.print("Creating systemd service file...")
+        template_path = "service/cecdaemon.service"
+        executable_path = path_join(CONFIG['paths']['executable_dir'], "cecdaemon")
+        service_content = create_service_from_template(
+            ctx, template_path, work_dir, 
+            CONFIG['user_group']['user'], 
+            CONFIG['user_group']['group'], 
+            executable_path,
+            CONFIG['paths']['config_dir']
+        )
+        
+        if not service_content:
+            ctx.print("✗ Failed to create service from template")
+            ctx.system_exit(1)
+        
+        # Save the service file to build directory
+        service_file_path = path_join(build_dir, "cecdaemon.service")
+        ctx.write_file(service_file_path, service_content)
+        ctx.print(f"✓ Service file created: {service_file_path}")
         
         verify_uninstaller_functionality()
             
@@ -133,25 +164,25 @@ def install():
             permission_issues.append(CONFIG['permissions']['service_dir_warning'])
         if not CONFIG['permissions']['executable_dir_accessible']:
             permission_issues.append(CONFIG['permissions']['executable_dir_warning'])
+        if CONFIG['user_group']['user_needs_creation']:
+            permission_issues.append(CONFIG['permissions']['user_creation_warning'])
+        if CONFIG['user_group']['group_needs_creation']:
+            permission_issues.append(CONFIG['permissions']['group_creation_warning'])
+        if CONFIG['user_group']['usb_group_needed']:
+            permission_issues.append(CONFIG['permissions']['usb_group_warning'])
     
     if permission_issues and not ctx.dry_run:
         # We have permission issues and we're not in dry-run mode
         if os.geteuid() != 0:
-            # We're not running as root, so we need to save config and re-exec just the install step with sudo
+            # We're not running as root, so we need to re-exec just the install step with sudo
             ctx.print("⚠ Installation requires elevated privileges:")
             for issue in permission_issues:
                 ctx.print(f"  • {issue}")
             
-            # Save the current config to a temporary file
-            config_file = path_join(CONFIG['paths']['build_dir'], 'install_config.json')
-            try:
-                ctx.write_file(config_file, json.dumps(CONFIG, indent=2))
-                ctx.print(f"✓ Configuration saved to {config_file}")
-            except Exception as e:
-                ctx.print(f"✗ Failed to save configuration: {e}")
-                ctx.system_exit(1)
-            
             ctx.print("\nRe-executing install step with sudo privileges...")
+            
+            # Use the config file saved during configure()
+            config_file = path_join(CONFIG['paths']['build_dir'], 'install_config.json')
             
             # Construct command to run only the install step with the saved config
             install_cmd = [
@@ -227,6 +258,13 @@ def install():
     ctx.run(['chmod', '755', work_dir])
     ctx.print(f"✓ Work directory created: {work_dir}")
     
+    # Create lock subdirectory with read/write access for everyone
+    lock_dir = path_join(work_dir, 'lock')
+    ctx.makedirs(lock_dir, exist_ok=True)
+    ctx.run(['chown', f'{user}:{group}', lock_dir])
+    ctx.run(['chmod', '777', lock_dir])  # rwxrwxrwx (owner: rwx, group: rwx, other: rwx)
+    ctx.print(f"✓ Lock directory created: {lock_dir}")
+    
     # Create config directory (already done above but ensure ownership)
     ctx.makedirs(config_dir, exist_ok=True)
     ctx.run(['chown', 'root:root', config_dir])
@@ -248,7 +286,7 @@ def install():
     ctx.run(['chmod', '755', executable_dest])
     ctx.print(f"✓ Executable installed: {executable_dest}")
     
-    # 6. Save installation configuration for the uninstaller
+    # 3. Save installation configuration for the uninstaller
     ctx.print("Saving installation configuration...")
     uninstaller_config = {
         'service_dir': service_dir,
@@ -275,7 +313,7 @@ def install():
     except Exception as e:
         ctx.print(f"⚠ Warning: Could not save installation configuration: {e}")
     
-    # 3. Install the uninstaller to config directory
+    # 4. Install the uninstaller to config directory
     ctx.print("Copying uninstaller...")
     uninstaller_source = path_join(build_dir, "uninstaller.py")
     uninstaller_dest = path_join(config_dir, "uninstaller.py")
@@ -288,19 +326,20 @@ def install():
     else:
         ctx.print(f"⚠ Warning: Uninstaller not found in build: {uninstaller_source}")
     
-    # 4. Create and install systemd service from template
+    # 5. Install the pre-built systemd service file
     ctx.print("Installing systemd service...")
-    template_path = "service/cecdaemon.service"
-    executable_path = path_join(executable_dir, "cecdaemon")
-    service_content = create_service_from_template(
-        ctx, template_path, work_dir, user, group, executable_path
-    )
+    service_file_source = path_join(build_dir, "cecdaemon.service")
     
-    if not service_content:
-        ctx.print("✗ Failed to create service from template")
+    if not ctx.exists(service_file_source):
+        ctx.print(f"✗ Built service file not found: {service_file_source}")
+        ctx.print("✗ Make sure build() was called first")
         ctx.system_exit(1)
     
-    # 5. Install the service file
+    # Read the service content and install it
+    with ctx.read_file(service_file_source) as f:
+        service_content = f.read()
+    
+    # 6. Install the service file
     if not install_service_file(ctx, service_content, "cecdaemon", service_dir):
         ctx.print("✗ Failed to install systemd service")
         ctx.system_exit(1)

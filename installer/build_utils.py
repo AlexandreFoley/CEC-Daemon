@@ -291,7 +291,7 @@ def substitute_work_dir_in_build(build_dir, work_dir):
     # Substitute the hardcoded work_dir with the actual one
     # Look for the line: work_dir = "/path/to/hardcoded/dir/"
     # Pattern to match: work_dir = "any/path/here"
-    pattern = r'^work_dir\s*=\s*["\'][^"\']*["\']'
+    pattern = r'^work_dir\s*=.*$'
     replacement = f'work_dir = "{work_dir}"'
     
     # Replace the work_dir assignment

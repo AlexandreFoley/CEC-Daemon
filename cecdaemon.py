@@ -20,11 +20,16 @@ import filelock
 
 import cecclient
 
-work_dir = "./DEV-CEC-Daemon/"
+work_dir = os.path.join(os.getcwd(), "DEV-CEC-Daemon")
 
-daemonInput = work_dir + "daemoninput.fifo"
-daemonOutput = work_dir + "daemonoutput.fifo"
-daemonLock = daemonInput+".lock"
+input_fifo_name = "daemoninput.fifo"
+output_fifo_name = "daemonoutput.fifo"
+input_lock_name = input_fifo_name + ".lock"
+daemonInput = os.path.join(work_dir, input_fifo_name)
+daemonOutput = os.path.join(work_dir, output_fifo_name)
+lock_path = os.path.join(work_dir,'lock')
+daemonLock = os.path.join(lock_path, input_lock_name)
+
 DONE = "éà\n"
 ATTACHDONE="àéà\n"
 
@@ -109,7 +114,7 @@ class cecdaemon(dae.Daemon):
 		os.mkfifo(daemonInput,mode=0o666) #for some reason the mode is getting ignored here. and AFAK, 666 is the default, so why do i have to set it?
 		os.chmod(daemonInput,0o666)
 		os.mkfifo(daemonOutput,mode=0o644)#read only for everyone but the owner.
-		lock = filelock.FileLock(daemonInput+'.lock', timeout=1)
+		lock = filelock.FileLock(daemonLock, timeout=1)
 		self.cec = cecclient.pyCecClient(deviceType=cecclient.CEC_DEVICE_TYPE_PLAYBACK_DEVICE)
 		self.cec.SetLogCallback(self.cec.LogCallback)
 		self.cec.SetKeyPressCallback(self.cec.KeyPressCallback )
@@ -134,7 +139,7 @@ class cecdaemon(dae.Daemon):
 		if pid:
 			handle = threading.Thread(target = read_and_print_pipe,args = (daemonOutput,sys.stdout))
 			handle.start()
-			lock = filelock.FileLock(daemonInput+'.lock', timeout=1)
+			lock = filelock.FileLock(daemonLock, timeout=1)
 			with lock.acquire():
 				pipe = open(daemonInput,"w")
 				for a in args:
@@ -271,7 +276,7 @@ class cecdaemon(dae.Daemon):
 
 if __name__ == '__main__':
 	daemon = cecdaemon(
-		pid_file=work_dir+'cecdaemon.pid',
+		pid_file=os.path.join(work_dir,'cecdaemon.pid'),
 		work_dir=work_dir,
 		# detach = False, #default is True
 	)

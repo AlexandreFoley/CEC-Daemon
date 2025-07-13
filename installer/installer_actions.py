@@ -9,7 +9,7 @@ from .execution_context import ExecutionContext, path_join
 
 
 
-def create_service_from_template(ctx: ExecutionContext, template_path, work_dir, user, group, executable_path):
+def create_service_from_template(ctx: ExecutionContext, template_path, work_dir, user, group, executable_path, config_dir):
     """
     Create a systemd service file from a template by replacing placeholders.
     
@@ -20,6 +20,7 @@ def create_service_from_template(ctx: ExecutionContext, template_path, work_dir,
         user: User to run the service as
         group: Group to run the service as
         executable_path: Full path to the daemon executable
+        config_dir: Configuration directory for the daemon
         
     Returns:
         str: The processed service file content
@@ -33,7 +34,8 @@ def create_service_from_template(ctx: ExecutionContext, template_path, work_dir,
             USER=user,
             GROUP=group,
             WORK_DIR=work_dir,
-            EXECUTABLE_PATH=executable_path
+            EXECUTABLE_PATH=executable_path,
+            CONFIG_DIR=config_dir
         )
         
         return service_content

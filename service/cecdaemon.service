@@ -3,23 +3,17 @@ Description=CEC Daemon for HDMI-CEC control
 After=multi-user.target
 
 [Service]
-Type=simple
+Type=forking
 User={USER}
 Group={GROUP}
 WorkingDirectory={WORK_DIR}
-ExecStart={EXECUTABLE_PATH}
+ExecStart={EXECUTABLE_PATH} start
+ExecStop={EXECUTABLE_PATH} stop
+ExecReload={EXECUTABLE_PATH} restart
+PIDFile={WORK_DIR}/cecdaemon.pid
 Environment=CECDAEMON_CONFIG_DIR={CONFIG_DIR}
-ConfigurationDirectory=cecdaemon
-Restart=always
-RestartSec=10
+ConfigurationDirectory={CONFIG_DIR}
 
-# Security settings
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths={WORK_DIR}
-ReadWritePaths={CONFIG_DIR}
 
 [Install]
 WantedBy=multi-user.target
